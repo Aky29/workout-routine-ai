@@ -2,7 +2,8 @@ from dotenv import load_dotenv
 import os
 from langchain_groq import ChatGroq
 from langchain.tools import tool
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain.agents import AgentExecutor
+from langchain.agents.react.agent import create_react_agent
 from langchain.prompts import ChatPromptTemplate
 
 # ---------------- ENV ---------------- #
@@ -23,17 +24,21 @@ llm = ChatGroq(
 @tool
 def analyze_goal(text: str) -> str:
     """
-    Analyze the user's fitness goal and explain the training focus.
+    Analyze the user's fitness goal and explain training focus.
     """
-    return llm.invoke(f"Analyze this fitness goal and give training focus:\n{text}").content
+    return llm.invoke(
+        f"Analyze this fitness goal and give training focus:\n{text}"
+    ).content
 
 
 @tool
 def decide_split(text: str) -> str:
     """
-    Decide an appropriate weekly workout split based on the user's request.
+    Decide a weekly workout split based on the user's request.
     """
-    return llm.invoke(f"Create a weekly workout split based on:\n{text}").content
+    return llm.invoke(
+        f"Create a weekly workout split based on:\n{text}"
+    ).content
 
 
 @tool
@@ -41,7 +46,9 @@ def suggest_exercises(text: str) -> str:
     """
     Suggest exercises based on available equipment and workout type.
     """
-    return llm.invoke(f"Suggest suitable exercises based on:\n{text}").content
+    return llm.invoke(
+        f"Suggest suitable exercises based on:\n{text}"
+    ).content
 
 
 @tool
@@ -49,7 +56,9 @@ def sets_and_reps(text: str) -> str:
     """
     Recommend sets, reps, and rest times based on goal and experience level.
     """
-    return llm.invoke(f"Suggest sets, reps, and rest times for:\n{text}").content
+    return llm.invoke(
+        f"Suggest sets, reps, and rest times for:\n{text}"
+    ).content
 
 
 tools = [
@@ -70,10 +79,10 @@ Use the available tools when helpful.
 User input:
 {input}
 
-Your final answer must be a complete, well-structured workout plan with:
-- Clear weekly split
+Return a complete workout plan with:
+- Weekly split
 - Exercises per day
-- Sets, reps, and rest times
+- Sets, reps, and rest
 - Short tips
 """)
 
