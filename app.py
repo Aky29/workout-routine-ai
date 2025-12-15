@@ -9,51 +9,34 @@ st.set_page_config(
 )
 
 st.title("🏋️ AI Workout Split Generator")
-st.write("Describe your fitness goal in your own words")
+st.write("Describe your workout needs in your own words")
 
-# ---------------- TEXT INPUT ---------------- #
 user_prompt = st.text_area(
-    "💬 Tell me about your workout needs",
-    placeholder=(
-        "Example:\n"
-        "I want a 4 day muscle gain workout using dumbbells. "
-        "I am an intermediate lifter and want 60 minute sessions."
-    ),
-    height=160
+    "💬 Your workout request",
+    placeholder="Example: 4 day muscle gain workout with dumbbells for intermediate level",
+    height=150
 )
 
-generate = st.button("Generate Workout 💪")
-
-# ---------------- GENERATION ---------------- #
-if generate:
+if st.button("Generate Workout 💪"):
     if not user_prompt.strip():
-        st.warning("Please describe your workout requirements.")
+        st.warning("Please enter your workout details.")
     else:
-        with st.spinner("AI agents are building your workout..."):
-            plan = generate_plan(
-                goal="auto",
-                days="auto",
-                equipment="auto",
-                level="auto"
-            )
+        with st.spinner("Building your workout plan..."):
+            plan = generate_plan(user_prompt)
 
         st.success("Workout Plan Generated!")
-        st.markdown("## 📋 Your Personalized Plan")
         st.markdown(plan)
 
-        # ---------------- PDF EXPORT ---------------- #
-        pdf_data = {
-            "user_prompt": user_prompt,
-            "plan": plan
-        }
-
         pdf_filename = "workout_plan.pdf"
-        generate_workout_pdf(pdf_filename, pdf_data)
+        generate_workout_pdf(pdf_filename, {
+            "prompt": user_prompt,
+            "plan": plan
+        })
 
         with open(pdf_filename, "rb") as f:
             st.download_button(
-                label="📄 Download Workout Plan (PDF)",
-                data=f,
+                "📄 Download PDF",
+                f,
                 file_name="AI_Workout_Plan.pdf",
                 mime="application/pdf"
             )
