@@ -9,22 +9,27 @@ st.set_page_config(
 )
 
 st.title("🏋️ AI Workout Split Generator")
-st.write("Describe your workout needs in your own words")
+st.write("Describe your workout requirements in your own words")
 
 user_prompt = st.text_area(
     "💬 Your workout request",
-    placeholder="Example: 4 day muscle gain workout with dumbbells for intermediate level",
-    height=150
+    placeholder=(
+        "Example:\n"
+        "I want a 5 day muscle gain workout using full gym equipment. "
+        "I am intermediate and want 60 minute sessions."
+    ),
+    height=160
 )
 
 if st.button("Generate Workout 💪"):
     if not user_prompt.strip():
         st.warning("Please enter your workout details.")
     else:
-        with st.spinner("Building your workout plan..."):
+        with st.spinner("AI tools are building your workout..."):
             plan = generate_plan(user_prompt)
 
         st.success("Workout Plan Generated!")
+        st.markdown("## 📋 Your Personalized Plan")
         st.markdown(plan)
 
         pdf_filename = "workout_plan.pdf"
@@ -35,7 +40,7 @@ if st.button("Generate Workout 💪"):
 
         with open(pdf_filename, "rb") as f:
             st.download_button(
-                "📄 Download PDF",
+                "📄 Download Workout Plan (PDF)",
                 f,
                 file_name="AI_Workout_Plan.pdf",
                 mime="application/pdf"
