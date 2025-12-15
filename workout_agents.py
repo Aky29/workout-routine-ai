@@ -1,19 +1,23 @@
-from langchain_groq import ChatGroq
-from langchain.tools import tool
-from langchain.agents import initialize_agent, AgentType
 from dotenv import load_dotenv
 import os
 
-# Load .env
 load_dotenv()
+
 GROQ_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_KEY:
     raise ValueError("GROQ_API_KEY not found in environment variables.")
 
-# Initialize LLM
-llm = ChatGroq(api_key=GROQ_KEY, model="llama-3.1-8b-instant", temperature=0.5)
+# ---------- SHARED LLM ----------
+from langchain_groq import ChatGroq
 
-# ---------------- TOOLS ---------------- #
+llm = ChatGroq(
+    api_key=GROQ_KEY,
+    model="llama-3.1-8b-instant",
+    temperature=0.5
+)
+
+# ---------- TOOLS ----------
+from langchain.tools import tool
 
 @tool
 def goal_analysis(goal: str) -> str:
@@ -29,48 +33,13 @@ def workout_split(days: str) -> str:
 
 @tool
 def exercise_selector(day_and_equipment: str) -> str:
-    """
-    Suggest exercises for a workout day based on available equipment.
-    Input format: 'Day Type | Equipment'
-    """
+    """Suggest exercises for a workout day based on equipment."""
     day, equipment = day_and_equipment.split("|")
-    return llm.invoke(f"Suggest exercises for {day.strip()} with {equipment.strip()}").content
+    return llm.invoke(
+        f"Suggest exercises for {day.strip()} with {equipment.strip()}"
+    ).content
 
 
 @tool
 def sets_reps(goal_and_level: str) -> str:
-    """
-    Suggest sets and reps for each exercise based on fitness goal and experience level.
-    Input format: 'Goal | Level'
-    """
-    goal, level = goal_and_level.split("|")
-    return llm.invoke(f"Suggest sets and reps for {goal.strip()}, level {level.strip()}").content
-
-
-# ---------------- AGENT ---------------- #
-
-tools = [goal_analysis, workout_split, exercise_selector, sets_reps]
-
-agent = initialize_agent(
-    tools=tools,
-    llm=llm,
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=False
-)
-
-
-# ---------------- ENTRY FUNCTION ---------------- #
-
-def generate_plan(goal, days, equipment, level):
-    """
-    Generate a full workout plan using Groq LLM agent.
-    Includes weekly split, exercises per day, and sets/reps guidance.
-    """
-    prompt = f"""
-    Create a complete workout plan.
-    Goal: {goal}
-    Days: {days}
-    Equipment: {equipment}
-    Experience Level: {level}
-    """
-    return agent.run(prompt)
+    """Suggest sets and rep
