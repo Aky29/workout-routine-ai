@@ -1,104 +1,99 @@
 from dotenv import load_dotenv
 import os
+from langchain_groq import ChatGroq
+from langchain.tools import tool
+from langchain.agents import AgentExecutor, create_react_agent
+from langchain.prompts import ChatPromptTemplate
 
+# ---------------- ENV ---------------- #
 load_dotenv()
-
 GROQ_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_KEY:
     raise RuntimeError("GROQ_API_KEY not found")
 
-from langchain_groq import ChatGroq
-from langchain.tools import tool
-
-# ---------- LLM ----------
+# ---------------- LLM ---------------- #
 llm = ChatGroq(
     api_key=GROQ_KEY,
     model="llama-3.1-8b-instant",
     temperature=0.5
 )
 
-# ---------- TOOLS ----------
-@tool
-def goal_analysis(text: str) -> str:
-    return llm.invoke(f"Analyze fitness goal: {text}").content
-
+# ---------------- TOOLS ---------------- #
 
 @tool
-def workout_split(text: str) -> str:
-    return llm.invoke(f"Create workout split: {text}").content
-
-
-@tool
-def exercise_selector(text: str) -> str:
-    return llm.invoke(f"Suggest exercises: {text}").content
+def analyze_goal(text: str) -> str:
+    """
+    Analyze the user's fitness goal and explain the training focus.
+    """
+    return llm.invoke(f"Analyze this fitness goal and give training focus:\n{text}").content
 
 
 @tool
-def sets_reps(text: str) -> str:
-    return llm.invoke(f"Suggest sets and reps: {text}").content
+def decide_split(text: str) -> str:
+    """
+    Decide an appropriate weekly workout split based on the user's request.
+    """
+    return llm.invoke(f"Create a weekly workout split based on:\n{text}").content
 
 
-tools = [goal_analysis, workout_split, exercise_selector, sets_reps]
+@tool
+def suggest_exercises(text: str) -> str:
+    """
+    Suggest exercises based on available equipment and workout type.
+    """
+    return llm.invoke(f"Suggest suitable exercises based on:\n{text}").content
 
 
-# ---------- AGENT BUILDER ----------
-def _get_agent():
-    try:
-        # NEW LangChain
-        from langchain.agents import AgentExecutor, create_react_agent
-        from langchain.prompts import ChatPromptTemplate
-
-        prompt = ChatPromptTemplate.from_template("""
-        You are a professional fitness coach.
-
-        User input:
-        {input}
-
-        Extract:
-        - Goal
-        - Days
-        - Equipment
-        - Experience level
-
-        Then generate a complete workout plan.
-        """)
-
-        agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
-
-        return AgentExecutor(agent=agent, tools=tools, verbose=False)
-
-    except Exception:
-        # OLD LangChain
-        from langchain.agents import initialize_agent, AgentType
-
-        return initialize_agent(
-            tools=tools,
-            llm=llm,
-            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=False
-        )
+@tool
+def sets_and_reps(text: str) -> str:
+    """
+    Recommend sets, reps, and rest times based on goal and experience level.
+    """
+    return llm.invoke(f"Suggest sets, reps, and rest times for:\n{text}").content
 
 
-# ---------- PUBLIC FUNCTION ----------
+tools = [
+    analyze_goal,
+    decide_split,
+    suggest_exercises,
+    sets_and_reps
+]
+
+# ---------------- AGENT ---------------- #
+
+prompt = ChatPromptTemplate.from_template("""
+You are a professional fitness coach.
+
+The user will describe their workout needs in natural language.
+Use the available tools when helpful.
+
+User input:
+{input}
+
+Your final answer must be a complete, well-structured workout plan with:
+- Clear weekly split
+- Exercises per day
+- Sets, reps, and rest times
+- Short tips
+""")
+
+agent = create_react_agent(
+    llm=llm,
+    tools=tools,
+    prompt=prompt
+)
+
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=False
+)
+
+# ---------------- PUBLIC FUNCTION ---------------- #
+
 def generate_plan(user_prompt: str) -> str:
     """
-    Accepts free-text user prompt and returns workout plan
+    Generate a workout plan from a free-text user prompt.
     """
-    agent = _get_agent()
-
-    final_prompt = f"""
-    User workout description:
-    {user_prompt}
-
-    Create a detailed workout plan with:
-    - Weekly split
-    - Exercises
-    - Sets & reps
-    - Rest times
-    """
-
-    try:
-        result = agent.invoke({"input": final_prompt})
-        return result["output"]
-    except AttributeError:
-        return agent.run(final_prompt)
+    result = agent_executor.invoke({"input": user_prompt})
+    return result["output"]
