@@ -2,40 +2,33 @@ from dotenv import load_dotenv
 import os
 from langchain_groq import ChatGroq
 from langchain.tools import tool
-from langchain.agents import AgentExecutor
-from langchain.agents.react.agent import create_react_agent
-from langchain.prompts import ChatPromptTemplate
 
-# ---------------- ENV ---------------- #
+# ---------------- ENV ----------------
 load_dotenv()
 GROQ_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_KEY:
     raise RuntimeError("GROQ_API_KEY not found")
 
-# ---------------- LLM ---------------- #
+# ---------------- LLM ----------------
 llm = ChatGroq(
     api_key=GROQ_KEY,
     model="llama-3.1-8b-instant",
     temperature=0.5
 )
 
-# ---------------- TOOLS ---------------- #
+# ---------------- TOOLS ----------------
 
 @tool
 def analyze_goal(text: str) -> str:
-    """
-    Analyze the user's fitness goal and explain training focus.
-    """
+    """Analyze the user's fitness goal and explain training focus."""
     return llm.invoke(
-        f"Analyze this fitness goal and give training focus:\n{text}"
+        f"Analyze the fitness goal and training focus:\n{text}"
     ).content
 
 
 @tool
 def decide_split(text: str) -> str:
-    """
-    Decide a weekly workout split based on the user's request.
-    """
+    """Decide an appropriate weekly workout split."""
     return llm.invoke(
         f"Create a weekly workout split based on:\n{text}"
     ).content
@@ -43,66 +36,58 @@ def decide_split(text: str) -> str:
 
 @tool
 def suggest_exercises(text: str) -> str:
-    """
-    Suggest exercises based on available equipment and workout type.
-    """
+    """Suggest exercises based on equipment and workout type."""
     return llm.invoke(
-        f"Suggest suitable exercises based on:\n{text}"
+        f"Suggest exercises based on:\n{text}"
     ).content
 
 
 @tool
 def sets_and_reps(text: str) -> str:
-    """
-    Recommend sets, reps, and rest times based on goal and experience level.
-    """
+    """Recommend sets, reps, and rest times."""
     return llm.invoke(
-        f"Suggest sets, reps, and rest times for:\n{text}"
+        f"Recommend sets, reps, and rest times for:\n{text}"
     ).content
 
 
-tools = [
-    analyze_goal,
-    decide_split,
-    suggest_exercises,
-    sets_and_reps
-]
+TOOLS = {
+    "analyze_goal": analyze_goal,
+    "decide_split": decide_split,
+    "suggest_exercises": suggest_exercises,
+    "sets_and_reps": sets_and_reps,
+}
 
-# ---------------- AGENT ---------------- #
-
-prompt = ChatPromptTemplate.from_template("""
-You are a professional fitness coach.
-
-The user will describe their workout needs in natural language.
-Use the available tools when helpful.
-
-User input:
-{input}
-
-Return a complete workout plan with:
-- Weekly split
-- Exercises per day
-- Sets, reps, and rest
-- Short tips
-""")
-
-agent = create_react_agent(
-    llm=llm,
-    tools=tools,
-    prompt=prompt
-)
-
-agent_executor = AgentExecutor(
-    agent=agent,
-    tools=tools,
-    verbose=False
-)
-
-# ---------------- PUBLIC FUNCTION ---------------- #
+# ---------------- MAIN FUNCTION ----------------
 
 def generate_plan(user_prompt: str) -> str:
     """
-    Generate a workout plan from a free-text user prompt.
+    Generate a workout plan using tools WITHOUT LangChain agents.
     """
-    result = agent_executor.invoke({"input": user_prompt})
-    return result["output"]
+
+    goal = TOOLS["analyze_goal"].run(user_prompt)
+    split = TOOLS["decide_split"].run(user_prompt)
+    exercises = TOOLS["suggest_exercises"].run(user_prompt)
+    volume = TOOLS["sets_and_reps"].run(user_prompt)
+
+    final_prompt = f"""
+You are a professional fitness coach.
+
+User request:
+{user_prompt}
+
+Training focus:
+{goal}
+
+Weekly split:
+{split}
+
+Exercises:
+{exercises}
+
+Sets and reps:
+{volume}
+
+Now combine everything into ONE clean, structured workout plan.
+"""
+
+    return llm.invoke(final_prompt).content
