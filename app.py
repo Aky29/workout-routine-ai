@@ -9,57 +9,51 @@ st.set_page_config(
 )
 
 st.title("🏋️ AI Workout Split Generator")
-st.write("Personalized workouts powered by AI agents")
+st.write("Describe your fitness goal in your own words")
 
-# ---------------- FORM ---------------- #
-with st.form("workout_form"):
-    goal = st.selectbox(
-        "🎯 Fitness Goal",
-        ["Muscle Gain", "Fat Loss", "Strength", "General Fitness"]
-    )
+# ---------------- TEXT INPUT ---------------- #
+user_prompt = st.text_area(
+    "💬 Tell me about your workout needs",
+    placeholder=(
+        "Example:\n"
+        "I want a 4 day muscle gain workout using dumbbells. "
+        "I am an intermediate lifter and want 60 minute sessions."
+    ),
+    height=160
+)
 
-    days = st.selectbox(
-        "📅 Days Per Week",
-        ["3", "4", "5", "6"]
-    )
-
-    equipment = st.selectbox(
-        "🏋️ Equipment Available",
-        ["Bodyweight", "Dumbbells", "Barbell", "Full Gym"]
-    )
-
-    level = st.selectbox(
-        "📈 Experience Level",
-        ["Beginner", "Intermediate", "Advanced"]
-    )
-
-    submit = st.form_submit_button("Generate Workout 💪")
+generate = st.button("Generate Workout 💪")
 
 # ---------------- GENERATION ---------------- #
-if submit:
-    with st.spinner("AI agents are building your workout..."):
-        plan = generate_plan(goal, days, equipment, level)
+if generate:
+    if not user_prompt.strip():
+        st.warning("Please describe your workout requirements.")
+    else:
+        with st.spinner("AI agents are building your workout..."):
+            plan = generate_plan(
+                goal="auto",
+                days="auto",
+                equipment="auto",
+                level="auto"
+            )
 
-    st.success("Workout Plan Generated!")
-    st.markdown("## 📋 Your Personalized Plan")
-    st.markdown(plan)
+        st.success("Workout Plan Generated!")
+        st.markdown("## 📋 Your Personalized Plan")
+        st.markdown(plan)
 
-    # ---------------- PDF EXPORT ---------------- #
-    pdf_data = {
-        "goal": goal,
-        "days": days,
-        "equipment": equipment,
-        "level": level,
-        "plan": plan
-    }
+        # ---------------- PDF EXPORT ---------------- #
+        pdf_data = {
+            "user_prompt": user_prompt,
+            "plan": plan
+        }
 
-    pdf_filename = "workout_plan.pdf"
-    generate_workout_pdf(pdf_filename, pdf_data)
+        pdf_filename = "workout_plan.pdf"
+        generate_workout_pdf(pdf_filename, pdf_data)
 
-    with open(pdf_filename, "rb") as f:
-        st.download_button(
-            label="📄 Download Workout Plan (PDF)",
-            data=f,
-            file_name="AI_Workout_Plan.pdf",
-            mime="application/pdf"
-        )
+        with open(pdf_filename, "rb") as f:
+            st.download_button(
+                label="📄 Download Workout Plan (PDF)",
+                data=f,
+                file_name="AI_Workout_Plan.pdf",
+                mime="application/pdf"
+            )
