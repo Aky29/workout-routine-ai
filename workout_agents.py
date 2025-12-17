@@ -98,12 +98,7 @@ def generate_plan(user_prompt: str) -> str:
     })
     return result["output"]
 
-# ---------------- TEST ----------------
-if __name__ == "__main__":
-    user_request = "I want to build muscle with limited gym equipment and train 4 days a week."
-    plan = generate_plan(user_request)
-    print("\n--- GENERATED WORKOUT PLAN ---\n")
-    print(plan)
+
 
 
 
