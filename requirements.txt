@@ -3,4 +3,3 @@ langchain>=0.2.0
 langchain-groq
 python-dotenv
 reportlab
-langchain.agents
