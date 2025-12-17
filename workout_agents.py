@@ -1,38 +1,54 @@
-from dotenv import load_dotenv
+# ---------------- IMPORTS ----------------
 import os
+from dotenv import load_dotenv
+
 from langchain_groq import ChatGroq
 from langchain.tools import tool
-from langchain.agents.agent import AgentExecutor, create_react_agent
+from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import PromptTemplate
 
+# ---------------- ENV ----------------
 load_dotenv()
 GROQ_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_KEY:
     raise RuntimeError("GROQ_API_KEY not found")
+
+# ---------------- LLM ----------------
 llm = ChatGroq(
     api_key=GROQ_KEY,
     model="llama-3.1-8b-instant",
     temperature=0.5
 )
+
+# ---------------- TOOLS ----------------
 @tool
 def analyze_goal(text: str) -> str:
     """Analyze the user's fitness goal and extract training focus."""
     return f"User fitness goal: {text}"
+
 @tool
 def decide_split(text: str) -> str:
     """Decide an appropriate weekly workout split."""
     return "Choose split based on goal, experience level, and availability."
+
 @tool
 def suggest_exercises(text: str) -> str:
     """Suggest exercises based on equipment and workout type."""
     return "Include compound lifts and accessories suitable for the split."
+
 @tool
 def sets_and_reps(text: str) -> str:
     """Recommend sets, reps, and rest times."""
     return "Strength: 3–5 sets of 3–6 reps, Hypertrophy: 3–4 sets of 8–12 reps."
-    
-tools = [analyze_goal,decide_split,suggest_exercises,sets_and_reps]
 
+tools = [
+    analyze_goal,
+    decide_split,
+    suggest_exercises,
+    sets_and_reps,
+]
+
+# ---------------- REACT PROMPT ----------------
 prompt = PromptTemplate.from_template("""
 You are a professional fitness coach AI.
 
@@ -53,11 +69,15 @@ Final Answer: a clean, structured workout plan
 Question: {input}
 {agent_scratchpad}
 """)
+
+# ---------------- CREATE AGENT ----------------
 agent = create_react_agent(
     llm=llm,
     tools=tools,
     prompt=prompt
 )
+
+# ---------------- AGENT EXECUTOR ----------------
 agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
@@ -65,6 +85,8 @@ agent_executor = AgentExecutor(
     max_iterations=6,
     handle_parsing_errors=True
 )
+
+# ---------------- PUBLIC FUNCTION ----------------
 def generate_plan(user_prompt: str) -> str:
     """
     Generate a workout plan using a Groq-powered AgentExecutor.
@@ -74,4 +96,9 @@ def generate_plan(user_prompt: str) -> str:
     })
     return result["output"]
 
-
+# ---------------- TEST ----------------
+if __name__ == "__main__":
+    user_request = "I want to build muscle with limited gym equipment and train 4 days a week."
+    plan = generate_plan(user_request)
+    print("\n--- GENERATED WORKOUT PLAN ---\n")
+    print(plan)
