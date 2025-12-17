@@ -1,12 +1,13 @@
 # ---------------- IMPORTS ----------------
+import streamlit as st
+from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_groq import ChatGroq
+from langchain_community.tools.tavily_search import TavilySearchResults
 import os
 from dotenv import load_dotenv
-
-from langchain_groq import ChatGroq
-from langchain.tools import tool
-from langchain.agents import AgentExecutor
-from langchain.prompts import PromptTemplate
-
 # ---------------- ENV ----------------
 load_dotenv()
 GROQ_KEY = os.getenv("GROQ_API_KEY")
@@ -102,4 +103,5 @@ if __name__ == "__main__":
     plan = generate_plan(user_request)
     print("\n--- GENERATED WORKOUT PLAN ---\n")
     print(plan)
+
 
