@@ -1,6 +1,6 @@
 # ---------------- IMPORTS ----------------
 import streamlit as st
-from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain.agents import create_react_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
@@ -104,6 +104,7 @@ if __name__ == "__main__":
     plan = generate_plan(user_request)
     print("\n--- GENERATED WORKOUT PLAN ---\n")
     print(plan)
+
 
 
 
