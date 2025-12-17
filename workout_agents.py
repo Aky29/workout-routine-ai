@@ -6,6 +6,7 @@ from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_groq import ChatGroq
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain.prompts import PromptTemplate
 import os
 from dotenv import load_dotenv
 # ---------------- ENV ----------------
@@ -103,5 +104,6 @@ if __name__ == "__main__":
     plan = generate_plan(user_request)
     print("\n--- GENERATED WORKOUT PLAN ---\n")
     print(plan)
+
 
 
