@@ -2,7 +2,8 @@ from dotenv import load_dotenv
 import os
 from langchain_groq import ChatGroq
 from langchain.tools import tool
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain.agents import create_react_agent
+from langchain.agents.agent import AgentExecutor
 from langchain.prompts import PromptTemplate
 
 load_dotenv()
@@ -73,3 +74,4 @@ def generate_plan(user_prompt: str) -> str:
         "input": user_prompt
     })
     return result["output"]
+
