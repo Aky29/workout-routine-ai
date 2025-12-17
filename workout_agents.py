@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
 from langchain.tools import tool
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain.agents import AgentExecutor
 from langchain.prompts import PromptTemplate
 
 # ---------------- ENV ----------------
@@ -102,3 +102,4 @@ if __name__ == "__main__":
     plan = generate_plan(user_request)
     print("\n--- GENERATED WORKOUT PLAN ---\n")
     print(plan)
+
