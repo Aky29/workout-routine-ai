@@ -1,5 +1,11 @@
 streamlit>=1.30.0
-langchain>=0.2.0
 langchain-groq
 python-dotenv
 reportlab
+langchain==0.3.14
+langchain-community==0.3.14
+tavily-python==0.5.0
+requests==2.32.3
+python-dotenv==1.0.1
+pydantic>=2.0.0
+streamlit
