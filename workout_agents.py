@@ -73,11 +73,15 @@ Question: {input}
 """)
 
 # ---------------- CREATE AGENT ----------------
-agent = create_react_agent(
-    llm=llm,
+agent = initialize_agent(
     tools=tools,
-    prompt=prompt
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=False,
+    max_iterations=3,        
+    early_stopping_method="generate" 
 )
+
 
 # ---------------- AGENT EXECUTOR ----------------
 agent_executor = AgentExecutor(
@@ -97,6 +101,7 @@ def generate_plan(user_prompt: str) -> str:
         "input": user_prompt
     })
     return result["output"]
+
 
 
 
