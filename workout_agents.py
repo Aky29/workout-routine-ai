@@ -1,15 +1,16 @@
-from langchain_groq import ChatGroq
-from langchain.tools import tool
-from langchain.agents import initialize_agent, AgentType
 from dotenv import load_dotenv
 import os
+
+from langchain_groq import ChatGroq
+
+from langchain.tools import tool
 
 load_dotenv()
 
 GROQ_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_KEY:
-    raise RuntimeError("GROQ_API_KEY not found")
 
+if not GROQ_KEY:
+    raise RuntimeError("GROQ_API_KEY not found in environment variables")
 llm = ChatGroq(
     api_key=GROQ_KEY,
     model="llama-3.1-8b-instant",
@@ -18,43 +19,93 @@ llm = ChatGroq(
 
 @tool
 def analyze_goal(text: str) -> str:
-    """Analyze the user's fitness goal."""
-    return f"Primary goal identified: {text}"
+    """
+    Tool 1:
+    Analyzes the user's fitness goal and explains
+    the appropriate training focus.
+    """
+    return llm.invoke(
+        f"Analyze the fitness goal and training focus:\n{text}"
+    ).content
+
 
 @tool
 def decide_split(text: str) -> str:
-    """Decide weekly workout split."""
-    return "Suggested split: Push/Pull/Legs or Upper/Lower depending on days."
+    """
+    Tool 2:
+    Determines the best weekly workout split
+    (e.g., Push/Pull/Legs, Upper/Lower).
+    """
+    return llm.invoke(
+        f"Create a weekly workout split based on:\n{text}"
+    ).content
+
 
 @tool
 def suggest_exercises(text: str) -> str:
-    """Suggest exercises based on equipment."""
-    return "Focus on compound lifts with accessory movements."
+    """
+    Tool 3:
+    Suggests exercises based on available equipment
+    and workout style.
+    """
+    return llm.invoke(
+        f"Suggest exercises based on:\n{text}"
+    ).content
+
 
 @tool
 def sets_and_reps(text: str) -> str:
-    """Recommend sets and reps."""
-    return "3–4 sets, 8–12 reps for hypertrophy; 3–5 sets, 3–6 reps for strength."
+    """
+    Tool 4:
+    Recommends sets, reps, and rest times based
+    on goal and experience level.
+    """
+    return llm.invoke(
+        f"Recommend sets, reps, and rest times for:\n{text}"
+    ).content
 
-tools = [
-    analyze_goal,
-    decide_split,
-    suggest_exercises,
-    sets_and_reps
-]
-agent = initialize_agent(
-    tools=tools,
-    llm=llm,
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=False,
-    max_iterations=3,
-    early_stopping_method="generate"
-)
+
+TOOLS = {
+    "analyze_goal": analyze_goal,
+    "decide_split": decide_split,
+    "suggest_exercises": suggest_exercises,
+    "sets_and_reps": sets_and_reps,
+}
 
 def generate_plan(user_prompt: str) -> str:
     """
-    Generate a workout plan using a Groq-powered ReAct agent.
-    This is called from Streamlit.
+    Orchestrates all tools to generate a complete
+    workout plan from a single user text prompt.
     """
-    result = agent.invoke(user_prompt)
-    return result["output"]
+
+    goal_analysis = TOOLS["analyze_goal"].run(user_prompt)
+
+    split_plan = TOOLS["decide_split"].run(user_prompt)
+
+    exercise_plan = TOOLS["suggest_exercises"].run(user_prompt)
+
+    volume_plan = TOOLS["sets_and_reps"].run(user_prompt)
+
+    final_prompt = f"""
+You are a professional fitness coach.
+
+User request:
+{user_prompt}
+
+Training focus:
+{goal_analysis}
+
+Weekly split:
+{split_plan}
+
+Exercise selection:
+{exercise_plan}
+
+Sets, reps, and rest:
+{volume_plan}
+
+Now combine all of the above into a single,
+well-structured, easy-to-follow workout plan.
+"""
+
+    return llm.invoke(final_prompt).content
